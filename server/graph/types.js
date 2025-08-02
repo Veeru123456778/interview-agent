@@ -1,33 +1,100 @@
-// Interview State Schema
-class InterviewState {
-  constructor() {
-    this.sessionId = '';
-    this.currentPhase = 'greeting'; // greeting, introduction, technical, behavioral, closing
-    this.questionCount = 0;
-    this.maxQuestions = 15;
-    this.lastQuestion = '';
-    this.lastAnswer = '';
-    this.lastAnswerQuality = 'good'; // good, needs_clarification, insufficient
-    this.conversationHistory = [];
-    this.candidateProfile = {
+// Interview State Schema - Using proper channel format for LangGraph 0.0.19
+const InterviewState = {
+  sessionId: {
+    reducer: (left, right) => right ?? left ?? '',
+    default: () => ''
+  },
+  currentPhase: {
+    reducer: (left, right) => right ?? left ?? 'greeting',
+    default: () => 'greeting'
+  },
+  questionCount: {
+    reducer: (left, right) => right ?? left ?? 0,
+    default: () => 0
+  },
+  maxQuestions: {
+    reducer: (left, right) => right ?? left ?? 15,
+    default: () => 15
+  },
+  lastQuestion: {
+    reducer: (left, right) => right ?? left ?? '',
+    default: () => ''
+  },
+  lastAnswer: {
+    reducer: (left, right) => right ?? left ?? '',
+    default: () => ''
+  },
+  lastAnswerQuality: {
+    reducer: (left, right) => right ?? left ?? 'good',
+    default: () => 'good'
+  },
+  conversationHistory: {
+    reducer: (left, right) => right ?? left ?? [],
+    default: () => []
+  },
+  candidateProfile: {
+    reducer: (left, right) => right ?? left ?? {
       name: '',
       position: '',
       experience: '',
       skills: [],
-      nervousness_level: 'normal' // calm, normal, nervous
-    };
-    this.askedQuestions = [];
-    this.evaluationScores = {
+      nervousness_level: 'normal'
+    },
+    default: () => ({
+      name: '',
+      position: '',
+      experience: '',
+      skills: [],
+      nervousness_level: 'normal'
+    })
+  },
+  askedQuestions: {
+    reducer: (left, right) => right ?? left ?? [],
+    default: () => []
+  },
+  evaluationScores: {
+    reducer: (left, right) => right ?? left ?? {
       technical: 0,
       behavioral: 0,
       communication: 0,
       overall: 0
-    };
-    this.needsFollowUp = false;
-    this.userRequestedRepeat = false;
-    this.userRequestedClarification = false;
-    this.interviewComplete = false;
+    },
+    default: () => ({
+      technical: 0,
+      behavioral: 0,
+      communication: 0,
+      overall: 0
+    })
+  },
+  needsFollowUp: {
+    reducer: (left, right) => right ?? left ?? false,
+    default: () => false
+  },
+  userRequestedRepeat: {
+    reducer: (left, right) => right ?? left ?? false,
+    default: () => false
+  },
+  userRequestedClarification: {
+    reducer: (left, right) => right ?? left ?? false,
+    default: () => false
+  },
+  interviewComplete: {
+    reducer: (left, right) => right ?? left ?? false,
+    default: () => false
+  },
+  lastEvaluation: {
+    reducer: (left, right) => right ?? left ?? null,
+    default: () => null
   }
+};
+
+// Helper function to create initial state
+function createInitialState() {
+  const state = {};
+  for (const [key, channel] of Object.entries(InterviewState)) {
+    state[key] = channel.default();
+  }
+  return state;
 }
 
 // Interview Phases
@@ -71,6 +138,7 @@ const TOOLS = {
 
 module.exports = {
   InterviewState,
+  createInitialState,
   INTERVIEW_PHASES,
   ANSWER_QUALITY,
   NODES,
