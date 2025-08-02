@@ -5,7 +5,7 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-const { createSession, getSession, removeSession } = require('./graph/graph');
+const { createSession, getSession, removeSession } = require('./graph/simple-graph');
 
 const app = express();
 const server = http.createServer(app);

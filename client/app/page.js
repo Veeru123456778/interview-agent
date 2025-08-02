@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import InterviewInterface from './components/InterviewInterface'
 import WelcomeScreen from './components/WelcomeScreen'
 import { SocketProvider } from './context/SocketContext'
+import { Toaster } from 'react-hot-toast'
 
 export default function Home() {
   const [interviewStarted, setInterviewStarted] = useState(false)
@@ -31,6 +32,7 @@ export default function Home() {
 
   return (
     <SocketProvider>
+      <Toaster position="top-right" />
       <main className="min-h-screen">
         {!interviewStarted ? (
           <WelcomeScreen onStartInterview={handleStartInterview} />

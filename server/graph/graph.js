@@ -49,9 +49,8 @@ function shouldConcludeInterview(state) {
 
 // Create the StateGraph
 function createInterviewGraph() {
-  const workflow = new StateGraph({
-    stateSchema: InterviewState
-  });
+  // Create workflow without stateSchema for now - we'll manage state manually
+  const workflow = new StateGraph();
 
   // Add all nodes
   workflow.addNode(NODES.START_INTERVIEW, startInterviewNode);
@@ -128,8 +127,37 @@ function createInterviewGraph() {
 class InterviewSession {
   constructor(sessionId) {
     this.sessionId = sessionId;
-    this.state = new InterviewState();
-    this.state.sessionId = sessionId;
+    
+    // Initialize state with proper structure
+    this.state = {
+      sessionId: sessionId,
+      currentPhase: 'greeting',
+      questionCount: 0,
+      maxQuestions: 15,
+      lastQuestion: '',
+      lastAnswer: '',
+      lastAnswerQuality: 'good',
+      conversationHistory: [],
+      candidateProfile: {
+        name: '',
+        position: '',
+        experience: '',
+        skills: [],
+        nervousness_level: 'normal'
+      },
+      askedQuestions: [],
+      evaluationScores: {
+        technical: 0,
+        behavioral: 0,
+        communication: 0,
+        overall: 0
+      },
+      needsFollowUp: false,
+      userRequestedRepeat: false,
+      userRequestedClarification: false,
+      interviewComplete: false
+    };
+    
     this.graph = createInterviewGraph();
   }
 
