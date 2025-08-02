@@ -1,5 +1,5 @@
 const { StateGraph, END, START } = require('@langchain/langgraph');
-const { InterviewState, INTERVIEW_PHASES, ANSWER_QUALITY, NODES } = require('./types');
+const { InterviewState, createInitialState, INTERVIEW_PHASES, ANSWER_QUALITY, NODES } = require('./types');
 const {
   startInterviewNode,
   askIntroductionNode,
@@ -50,76 +50,15 @@ function shouldConcludeInterview(state) {
 // Create the StateGraph
 function createInterviewGraph() {
   const workflow = new StateGraph({
-    stateSchema: InterviewState
+    channels: InterviewState
   });
 
-  // Add all nodes
+  // Add all nodes (minimal working set)
   workflow.addNode(NODES.START_INTERVIEW, startInterviewNode);
-  workflow.addNode(NODES.ASK_INTRODUCTION, askIntroductionNode);
-  workflow.addNode(NODES.ANALYZE_ANSWER, analyzeAnswerNode);
-  workflow.addNode(NODES.GENERATE_FOLLOW_UP, generateFollowUpNode);
-  workflow.addNode(NODES.GENERATE_NEXT_QUESTION, generateNextQuestionNode);
-  workflow.addNode(NODES.REPEAT_QUESTION, repeatQuestionNode);
-  workflow.addNode(NODES.CLARIFY_QUESTION, clarifyQuestionNode);
-  workflow.addNode(NODES.CONCLUDE_INTERVIEW, concludeInterviewNode);
-  workflow.addNode(NODES.HANDLE_CLOSING, handleClosingNode);
 
-  // Add edges
+  // Add edges - simple linear flow for now
   workflow.addEdge(START, NODES.START_INTERVIEW);
   workflow.addEdge(NODES.START_INTERVIEW, END);
-  
-  // Main flow routing
-  workflow.addConditionalEdges(
-    NODES.ANALYZE_ANSWER,
-    shouldClarifyQuestion,
-    {
-      [NODES.CLARIFY_QUESTION]: NODES.CLARIFY_QUESTION,
-      [NODES.GENERATE_FOLLOW_UP]: NODES.GENERATE_FOLLOW_UP,
-      [NODES.GENERATE_NEXT_QUESTION]: NODES.GENERATE_NEXT_QUESTION,
-      [NODES.CONCLUDE_INTERVIEW]: NODES.CONCLUDE_INTERVIEW
-    }
-  );
-
-  // After clarification, continue with normal flow
-  workflow.addConditionalEdges(
-    NODES.CLARIFY_QUESTION,
-    shouldGenerateFollowUp,
-    {
-      [NODES.GENERATE_FOLLOW_UP]: NODES.GENERATE_FOLLOW_UP,
-      [NODES.GENERATE_NEXT_QUESTION]: NODES.GENERATE_NEXT_QUESTION,
-      [NODES.CONCLUDE_INTERVIEW]: NODES.CONCLUDE_INTERVIEW
-    }
-  );
-
-  // After repeat, continue with normal flow  
-  workflow.addConditionalEdges(
-    NODES.REPEAT_QUESTION,
-    shouldGenerateFollowUp,
-    {
-      [NODES.GENERATE_FOLLOW_UP]: NODES.GENERATE_FOLLOW_UP,
-      [NODES.GENERATE_NEXT_QUESTION]: NODES.GENERATE_NEXT_QUESTION,
-      [NODES.CONCLUDE_INTERVIEW]: NODES.CONCLUDE_INTERVIEW
-    }
-  );
-
-  // After follow-up, wait for next answer
-  workflow.addEdge(NODES.GENERATE_FOLLOW_UP, END);
-  
-  // After next question, wait for answer
-  workflow.addEdge(NODES.GENERATE_NEXT_QUESTION, END);
-  
-  // Closing phase handling
-  workflow.addConditionalEdges(
-    NODES.HANDLE_CLOSING,
-    shouldConcludeInterview,
-    {
-      [NODES.ANALYZE_ANSWER]: NODES.ANALYZE_ANSWER,
-      [END]: END
-    }
-  );
-
-  // Interview conclusion
-  workflow.addEdge(NODES.CONCLUDE_INTERVIEW, END);
 
   return workflow.compile();
 }
@@ -128,7 +67,7 @@ function createInterviewGraph() {
 class InterviewSession {
   constructor(sessionId) {
     this.sessionId = sessionId;
-    this.state = new InterviewState();
+    this.state = createInitialState();
     this.state.sessionId = sessionId;
     this.graph = createInterviewGraph();
   }
